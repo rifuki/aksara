@@ -35,30 +35,68 @@ High-level flow
 3. Backend verifies signature and checks on-chain grant state (`verify_on_chain`).
 4. Request is accepted only when signature and grant are valid.
 
-Initial repository status
-------------------------
+Repository Structure
+--------------------
 
-This repository is initialized with the base project documentation.
-Code modules for contract, SDK, backend, and frontend can be added next as separate directories (`contract/`, `sdk/`, `backend/`, `frontend/`).
+```
+aksara/
+├── api/          # Axum REST API server (Rust)
+│   ├── src/
+│   └── README.md
+├── contract/     # Solana smart contract (Anchor) - Coming soon
+├── sdk/          # TypeScript SDK - Coming soon
+└── frontend/     # React dashboard - Coming soon
+```
 
-Getting started (template)
---------------------------
+### API Server (`api/`)
 
-After adding source modules:
+Production-ready REST API built with Rust and Axum:
+- Health check endpoints
+- Structured logging with file rotation
+- HTTP request tracing middleware
+- CORS configuration
+- Graceful shutdown handling
 
-1. Install dependencies in each workspace folder.
-2. Configure on-chain program and frontend/backend endpoints.
-3. Run backend + frontend services.
-4. Grant access on-chain and test signed protected endpoints.
+See [`api/README.md`](api/README.md) for setup instructions.
+
+Getting started
+---------------
+
+### 1. Start the API Server
+
+```bash
+cd api
+cp .env.example .env
+cargo run
+```
+
+Server starts on `http://localhost:8080`
+
+### 2. Future modules (coming soon)
+
+```bash
+# Deploy smart contract
+cd contract
+anchor deploy
+
+# Use SDK in your client
+cd sdk
+npm install
+
+# Run dashboard
+cd frontend
+npm run dev
+```
 
 Roadmap
 -------
 
-- Initialize smart contract module (`contract/`).
-- Add TypeScript SDK for signing/verification helpers.
-- Add Axum backend middleware for request verification.
-- Add React dashboard with wallet + auto-sign app-wallet mode.
-- Add integration tests and demo flow.
+- [x] Initialize API server with Axum (`api/`)
+- [ ] Initialize smart contract module (`contract/`)
+- [ ] Add TypeScript SDK for signing/verification helpers (`sdk/`)
+- [ ] Add Axum middleware for request verification
+- [ ] Add React dashboard with wallet + auto-sign app-wallet mode (`frontend/`)
+- [ ] Add integration tests and demo flow
 
 License
 -------
