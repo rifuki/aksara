@@ -53,7 +53,7 @@ export function GrantPanel() {
         .grantAccess(scope, expiresAt)
         .accounts({ grantee })
         .rpc();
-      setStatus({ ok: true, msg: "Access granted", sig: sig.slice(0, 16) });
+      setStatus({ ok: true, msg: "Access granted", sig });
       setGrantee("");
     } catch (err) {
       setStatus({ ok: false, msg: err instanceof Error ? err.message : String(err) });
@@ -71,7 +71,7 @@ export function GrantPanel() {
         .revokeAccess()
         .accounts({ grantee })
         .rpc();
-      setStatus({ ok: true, msg: "Access revoked", sig: sig.slice(0, 16) });
+      setStatus({ ok: true, msg: "Access revoked", sig });
       setGrantee("");
     } catch (err) {
       setStatus({ ok: false, msg: err instanceof Error ? err.message : String(err) });
@@ -193,7 +193,7 @@ export function GrantPanel() {
                 rel="noopener noreferrer"
                 className="text-blue-400 hover:text-blue-300 underline"
               >
-                {status.sig}…
+                {status.sig.slice(0, 16)}…
               </a>
             </div>
           )}
