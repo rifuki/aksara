@@ -185,8 +185,16 @@ export function GrantPanel() {
             <span>{status.msg}</span>
           </div>
           {status.sig && (
-            <div className="mt-1 text-xs text-slate-500 font-mono">
-              tx: {status.sig}…
+            <div className="mt-1 text-xs font-mono">
+              <span className="text-slate-500">tx: </span>
+              <a 
+                href={`https://explorer.solana.com/tx/${status.sig}?cluster=devnet`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:text-blue-300 underline"
+              >
+                {status.sig}…
+              </a>
             </div>
           )}
         </div>

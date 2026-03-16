@@ -5,7 +5,7 @@
 /// without depending on anchor-client or the program crate.
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use anchor_lang::{AccountDeserialize, AnchorDeserialize, Discriminator, prelude::borsh};
+use anchor_lang::{prelude::borsh, AccountDeserialize, AnchorDeserialize, Discriminator};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 
@@ -22,14 +22,16 @@ pub const SCOPE_DELETE: u8 = 0x04;
 // Fields must match the on-chain layout exactly.
 // Discriminator = sha256("account:AccessGrant")[..8], sourced from target/idl/aksara.json.
 
-#[derive(AnchorDeserialize)]
+// AccessGrant account layout (must match on-chain exactly)
+// Borsh serialized: no padding between fields
+#[derive(AnchorDeserialize, Debug)]
 struct AccessGrant {
-    _owner: Pubkey,
-    _grantee: Pubkey,
-    pub scope: u8,
-    pub expires_at: i64,
-    pub revoked: bool,
-    _bump: u8,
+    _owner: Pubkey,      // 32 bytes
+    _grantee: Pubkey,    // 32 bytes
+    pub scope: u8,       // 1 byte
+    pub expires_at: i64, // 8 bytes (Borsh uses little-endian)
+    pub revoked: bool,   // 1 byte (Borsh: 0=false, 1=true)
+    _bump: u8,           // 1 byte
 }
 
 impl Discriminator for AccessGrant {
@@ -109,8 +111,27 @@ pub fn verify_on_chain(
         .get_account(&pda)
         .map_err(|_| OnChainError::NotFound)?;
 
+    tracing::info!(
+        "Raw account data len: {}, first 20 bytes: {:?}",
+        account.data.len(),
+        &account.data[..20.min(account.data.len())]
+    );
+
     let grant = AccessGrant::try_deserialize(&mut account.data.as_ref())
         .map_err(|e| OnChainError::RpcError(format!("Deserialization failed: {e}")))?;
+
+    tracing::info!(
+        "AccessGrant: scope={}, expires_at={}, revoked={}",
+        grant.scope,
+        grant.expires_at,
+        grant.revoked
+    );
+    tracing::debug!(
+        "revoked={}, expires_at={}, scope={}",
+        grant.revoked,
+        grant.expires_at,
+        grant.scope
+    );
 
     if grant.revoked {
         return Err(OnChainError::Revoked);
