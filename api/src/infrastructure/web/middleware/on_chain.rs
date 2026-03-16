@@ -5,7 +5,7 @@
 /// without depending on anchor-client or the program crate.
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use anchor_lang::{prelude::borsh, AccountDeserialize, AnchorDeserialize, Discriminator};
+use anchor_lang::{AccountDeserialize, AnchorDeserialize, Discriminator, prelude::borsh};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 
