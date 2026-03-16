@@ -8,6 +8,7 @@ export type Endpoint = {
   label: string;
   method: "GET" | "POST" | "PUT" | "DELETE";
   path: string;
+  auth: "public" | "private";
   params?: ParamField[];
   body?: ParamField[];
 };
@@ -18,43 +19,41 @@ export const ENDPOINTS = {
       label: "List All Messages",
       method: "GET" as const,
       path: "/aksara/messages",
-    },
-    mine: {
-      label: "My Messages",
-      method: "GET" as const,
-      path: "/aksara/messages/mine",
+      auth: "public" as const,
     },
     get: {
       label: "Get Message",
       method: "GET" as const,
       path: "/aksara/messages/:id",
+      auth: "public" as const,
       params: [{ name: "id", label: "Message ID", placeholder: "uuid..." }],
+    },
+    mine: {
+      label: "My Messages",
+      method: "GET" as const,
+      path: "/aksara/messages/mine",
+      auth: "private" as const,
     },
     create: {
       label: "Create Message",
       method: "POST" as const,
       path: "/aksara/messages",
-      body: [
-        { name: "content", label: "Content", placeholder: "Hello world" },
-      ],
+      auth: "private" as const,
+      body: [{ name: "content", label: "Content", placeholder: "Hello world" }],
     },
     update: {
       label: "Update Message",
       method: "PUT" as const,
       path: "/aksara/messages/:id",
+      auth: "private" as const,
       params: [{ name: "id", label: "Message ID", placeholder: "uuid..." }],
-      body: [
-        {
-          name: "content",
-          label: "Content",
-          placeholder: "Updated content",
-        },
-      ],
+      body: [{ name: "content", label: "Content", placeholder: "Updated content" }],
     },
     delete: {
       label: "Delete Message",
       method: "DELETE" as const,
       path: "/aksara/messages/:id",
+      auth: "private" as const,
       params: [{ name: "id", label: "Message ID", placeholder: "uuid..." }],
     },
   },

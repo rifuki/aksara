@@ -1,92 +1,82 @@
 # Aksara API
 
-A production-ready REST API built with Rust using Axum framework.
+Axum REST API with RFC 9421 wallet-signed request verification and on-chain `AccessGrant` authorization.
 
-## Features
+## Endpoints
 
-- **Axum** - Fast, ergonomic web framework
-- **Tokio** - Async runtime
-- **Structured Logging** - Terminal (colored) + file rotation (daily)
-- **HTTP Tracing** - Request/response logging with latency tracking
-- **Error Handling** - Consistent API error/success responses
-- **CORS** - Configurable origin whitelist
-- **Graceful Shutdown** - Handles SIGTERM and Ctrl+C
+### Public (no auth)
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/health` | Health check |
+| `GET` | `/health/detail` | Health check with version + timestamp |
+| `GET` | `/aksara/messages` | List all messages |
+| `GET` | `/aksara/messages/:id` | Get a single message |
+
+### Private (wallet signature + on-chain grant required)
+
+| Method | Path | Required scope | Description |
+|---|---|---|---|
+| `GET` | `/aksara/messages/mine` | `READ` | Messages created by the caller |
+| `POST` | `/aksara/messages` | `WRITE` | Create a message |
+| `PUT` | `/aksara/messages/:id` | `WRITE` | Update any message |
+| `DELETE` | `/aksara/messages/:id` | `DELETE` | Delete any message |
+
+Every private request must carry RFC 9421 headers:
+
+```
+Content-Digest:  sha-256=:<base64>:          (when body present)
+Signature-Input: sol=("@authority" "@method" "@path" ["content-digest"]);created=<unix>;expires=<unix>;keyid="<base58>";nonce="<hex>"
+Signature:       sol=:<base64-ed25519>:
+```
 
 ## Quick Start
 
-### Prerequisites
-
-- Rust 1.70+
-- Cargo
-
-### Setup
-
-1. Copy environment file:
 ```bash
 cp .env.example .env
-```
-
-2. Edit `.env` with your configuration:
-```bash
-PORT=8080
-RUST_ENV=development
-CORS_ALLOWED_ORIGINS=http://localhost:5173
-```
-
-3. Run the server:
-```bash
+# fill in .env
 cargo run
-```
-
-The server will start on `http://localhost:8080`.
-
-## API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Basic health check |
-| `/health/detail` | GET | Detailed health status with timestamp |
-
-## Project Structure
-
-```
-src/
-├── main.rs          # Entry point
-├── lib.rs           # Module exports
-├── state.rs         # Application state
-├── routes.rs        # Route definitions
-├── feature/         # Business features
-│   └── health/      # Health check module
-└── infrastructure/  # Shared infrastructure
-    ├── config.rs    # Configuration
-    ├── logging.rs   # Logging setup
-    ├── server.rs    # Server utilities
-    └── web/         # Web utilities
-        ├── cors.rs
-        ├── middleware/
-        └── response/
 ```
 
 ## Configuration
 
 | Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `PORT` | Yes | - | Server port |
-| `RUST_ENV` | Yes | - | `development` or `production` |
+|---|---|---|---|
+| `PORT` | Yes | — | Server port |
+| `RUST_ENV` | Yes | — | `development` or `production` |
 | `CORS_ALLOWED_ORIGINS` | No | `*` | Comma-separated allowed origins |
+| `OWNER_PUBKEY` | No* | — | Base58 pubkey of the grant issuer |
+| `SOLANA_RPC_URL` | No | devnet | Solana JSON-RPC URL |
+| `PROGRAM_ID` | No* | — | Aksara program ID |
 
-## Development
+\* If `OWNER_PUBKEY` is omitted the API runs in **dev mode** — signatures are verified but on-chain grant check is skipped. If `OWNER_PUBKEY` is set, `PROGRAM_ID` is required.
 
-### Build
-```bash
-cargo build --release
+## Project Structure
+
 ```
-
-### Run with specific environment
-```bash
-RUST_ENV=production cargo run
+src/
+├── main.rs
+├── lib.rs
+├── routes.rs
+├── state.rs
+├── feature/
+│   ├── aksara/
+│   │   ├── handlers.rs   — public + private handlers
+│   │   ├── model.rs      — Message, CreateMessageRequest, UpdateMessageRequest
+│   │   ├── routes.rs     — public / private route split
+│   │   └── mod.rs
+│   └── health/
+└── infrastructure/
+    ├── config.rs         — ServerConfig + SolanaConfig
+    ├── env.rs
+    ├── logging.rs        — terminal + daily rolling file
+    ├── server.rs         — TCP listener + shutdown signal
+    └── web/
+        ├── cors.rs
+        ├── extractor/    — WalletAddress extractor
+        ├── middleware/
+        │   ├── wallet_auth.rs   — RFC 9421 verification + on-chain check
+        │   ├── on_chain.rs      — AccessGrant PDA fetch + validation
+        │   └── http_trace.rs    — request/response logging
+        └── response/     — ApiSuccess + ApiError
 ```
-
-## License
-
-MIT

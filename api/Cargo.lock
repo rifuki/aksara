@@ -54,17 +54,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "aksara"
-version = "0.1.0"
-dependencies = [
- "anchor-lang",
-]
-
-[[package]]
 name = "aksara-api"
 version = "0.1.0"
 dependencies = [
- "aksara",
  "anchor-lang",
  "axum",
  "base64 0.22.1",

@@ -20,11 +20,15 @@ function RouteComponent() {
       </div>
       {!connected && (
         <p className="text-sm text-muted-foreground">
-          Connect your wallet to get started.
+          Connect your wallet to use private endpoints and manage grants.
         </p>
       )}
-      <AutoSignToggle />
-      <GrantPanel />
+      {connected && (
+        <>
+          <AutoSignToggle />
+          <GrantPanel />
+        </>
+      )}
       <ApiTester />
     </div>
   );

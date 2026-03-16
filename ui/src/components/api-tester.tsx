@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { ALL_ENDPOINTS, METHOD_COLORS, buildPath, type Endpoint } from "@/api/endpoints";
-import { useProtectedQuery, useProtectedMutation } from "@/hooks/use-protected-api";
+import { usePublicQuery, useProtectedQuery, useProtectedMutation } from "@/hooks/use-protected-api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,7 @@ export function ApiTester() {
 
   const resolvedPath = buildPath(selected, params);
   const isGet = selected.method === "GET";
+  const isPrivate = selected.auth === "private";
 
   function handleSelect(label: string) {
     const endpoint = ALL_ENDPOINTS.find((e) => e.label === label)!;
@@ -26,7 +27,8 @@ export function ApiTester() {
     setBody({});
   }
 
-  if (!connected) return null;
+  // Private endpoints require wallet connection
+  const locked = isPrivate && !connected;
 
   return (
     <Card>
@@ -43,6 +45,9 @@ export function ApiTester() {
               <SelectItem key={e.label} value={e.label}>
                 <span className={METHOD_COLORS[e.method]}>{e.method}</span>
                 <span className="ml-2 text-muted-foreground">{e.label}</span>
+                <span className="ml-2">
+                  {e.auth === "public" ? "🌐" : "🔒"}
+                </span>
               </SelectItem>
             ))}
           </SelectContent>
@@ -54,9 +59,7 @@ export function ApiTester() {
             <Input
               placeholder={field.placeholder}
               value={params[field.name] ?? ""}
-              onChange={(e) =>
-                setParams({ ...params, [field.name]: e.target.value })
-              }
+              onChange={(e) => setParams({ ...params, [field.name]: e.target.value })}
             />
           </div>
         ))}
@@ -67,9 +70,7 @@ export function ApiTester() {
             <Input
               placeholder={field.placeholder}
               value={body[field.name] ?? ""}
-              onChange={(e) =>
-                setBody({ ...body, [field.name]: e.target.value })
-              }
+              onChange={(e) => setBody({ ...body, [field.name]: e.target.value })}
             />
           </div>
         ))}
@@ -80,11 +81,18 @@ export function ApiTester() {
           <Badge variant="outline" className={METHOD_COLORS[selected.method]}>
             {selected.method}
           </Badge>
+          <Badge variant={isPrivate ? "default" : "secondary"} className="text-xs">
+            {isPrivate ? "🔒 private" : "🌐 public"}
+          </Badge>
           <span className="truncate">{resolvedPath}</span>
         </div>
 
-        {isGet ? (
-          <GetAction path={resolvedPath} />
+        {locked ? (
+          <p className="text-sm text-muted-foreground">
+            Connect your wallet to use private endpoints.
+          </p>
+        ) : isGet ? (
+          <GetAction path={resolvedPath} auth={selected.auth} />
         ) : (
           <MutateAction endpoint={selected} path={resolvedPath} body={body} />
         )}
@@ -93,21 +101,25 @@ export function ApiTester() {
   );
 }
 
-function GetAction({ path }: { path: string }) {
+function GetAction({
+  path,
+  auth,
+}: {
+  path: string;
+  auth: "public" | "private";
+}) {
+  const pub = usePublicQuery<unknown>({ path, enabled: false });
+  const priv = useProtectedQuery<unknown>({ path, enabled: false });
+
   const { data, isFetching, isError, error, refetch } =
-    useProtectedQuery<unknown>({ path, enabled: false });
+    auth === "public" ? pub : priv;
 
   return (
     <div className="space-y-3">
       <Button onClick={() => refetch()} disabled={isFetching} className="w-full">
         {isFetching ? "Fetching..." : "Send"}
       </Button>
-      <ResponseBox
-        data={data}
-        isLoading={isFetching}
-        isError={isError}
-        error={error}
-      />
+      <ResponseBox data={data} isLoading={isFetching} isError={isError} error={error} />
     </div>
   );
 }
@@ -163,11 +175,10 @@ function ResponseBox({
   if (isLoading)
     return (
       <p className="text-sm text-muted-foreground animate-pulse">
-        Waiting for signature...
+        Waiting for response...
       </p>
     );
-  if (isError)
-    return <p className="text-sm text-red-500">{error?.message}</p>;
+  if (isError) return <p className="text-sm text-red-500">{error?.message}</p>;
   if (!data) return null;
   return (
     <pre className="text-xs bg-muted p-3 rounded-md overflow-auto max-h-60">

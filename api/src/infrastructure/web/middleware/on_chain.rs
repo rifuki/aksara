@@ -1,35 +1,70 @@
 /// On-chain AccessGrant verification.
 ///
-/// Derives the PDA [b"access", owner, grantee], fetches the account data via
-/// Solana JSON-RPC, and deserializes it using the aksara program crate directly
-/// (Anchor's `try_deserialize` handles discriminator validation automatically).
+/// Fetches the PDA via Solana JSON-RPC and deserializes using anchor-lang's
+/// `AccountDeserialize` — validates the 8-byte discriminator automatically,
+/// without depending on anchor-client or the program crate.
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use anchor_lang::AccountDeserialize;
-use aksara_program::state::AccessGrant;
-
-pub const SCOPE_READ: u8 = 0x01;
-pub const SCOPE_WRITE: u8 = 0x02;
-pub const SCOPE_DELETE: u8 = 0x04;
+use anchor_lang::{prelude::borsh, AccountDeserialize, AnchorDeserialize, Discriminator};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 
 use crate::infrastructure::config::SolanaConfig;
 
-// ── Public API ────────────────────────────────────────────────────────────────
+// ── Scope bitmask ─────────────────────────────────────────────────────────────
 
-/// Errors that can occur during on-chain verification.
+pub const SCOPE_READ: u8 = 0x01;
+pub const SCOPE_WRITE: u8 = 0x02;
+pub const SCOPE_DELETE: u8 = 0x04;
+
+// ── AccessGrant ───────────────────────────────────────────────────────────────
+//
+// Fields must match the on-chain layout exactly.
+// Discriminator = sha256("account:AccessGrant")[..8], sourced from target/idl/aksara.json.
+
+#[derive(AnchorDeserialize)]
+struct AccessGrant {
+    _owner: Pubkey,
+    _grantee: Pubkey,
+    pub scope: u8,
+    pub expires_at: i64,
+    pub revoked: bool,
+    _bump: u8,
+}
+
+impl Discriminator for AccessGrant {
+    const DISCRIMINATOR: &'static [u8] = &[167, 55, 184, 237, 74, 242, 0, 109];
+}
+
+impl AccountDeserialize for AccessGrant {
+    fn try_deserialize(buf: &mut &[u8]) -> anchor_lang::Result<Self> {
+        if buf.len() < 8 || &buf[..8] != Self::DISCRIMINATOR {
+            return Err(anchor_lang::error::ErrorCode::AccountDiscriminatorMismatch.into());
+        }
+        *buf = &buf[8..];
+        Self::try_deserialize_unchecked(buf)
+    }
+
+    fn try_deserialize_unchecked(buf: &mut &[u8]) -> anchor_lang::Result<Self> {
+        AnchorDeserialize::deserialize(buf)
+            .map_err(|_| anchor_lang::error::ErrorCode::AccountDidNotDeserialize.into())
+    }
+}
+
+impl AccessGrant {
+    fn is_valid(&self, required_scope: u8, now: i64) -> bool {
+        !self.revoked && self.expires_at > now && (self.scope & required_scope) != 0
+    }
+}
+
+// ── Errors ────────────────────────────────────────────────────────────────────
+
 #[derive(Debug)]
 pub enum OnChainError {
-    /// AccessGrant PDA does not exist
     NotFound,
-    /// Grant is revoked
     Revoked,
-    /// Grant has expired
     Expired,
-    /// Grant scope does not cover the required scope
     InsufficientScope,
-    /// RPC or deserialization failure
     RpcError(String),
 }
 
@@ -45,8 +80,8 @@ impl std::fmt::Display for OnChainError {
     }
 }
 
-/// Verify that `grantee_base58` has a valid on-chain grant from the owner
-/// with at least `required_scope`.
+// ── Verification ──────────────────────────────────────────────────────────────
+
 pub fn verify_on_chain(
     config: &SolanaConfig,
     grantee_base58: &str,
@@ -66,15 +101,12 @@ pub fn verify_on_chain(
         .parse()
         .map_err(|e| OnChainError::RpcError(format!("Invalid program_id: {e}")))?;
 
-    let (pda, _bump) =
+    let (pda, _) =
         Pubkey::find_program_address(&[b"access", owner.as_ref(), grantee.as_ref()], &program_id);
 
     let client = RpcClient::new(config.rpc_url.clone());
-    let account = client
-        .get_account(&pda)
-        .map_err(|_| OnChainError::NotFound)?;
+    let account = client.get_account(&pda).map_err(|_| OnChainError::NotFound)?;
 
-    // try_deserialize validates the 8-byte Anchor discriminator automatically.
     let grant = AccessGrant::try_deserialize(&mut account.data.as_ref())
         .map_err(|e| OnChainError::RpcError(format!("Deserialization failed: {e}")))?;
 
@@ -87,12 +119,12 @@ pub fn verify_on_chain(
         .unwrap()
         .as_secs() as i64;
 
-    if grant.expires_at <= now {
-        return Err(OnChainError::Expired);
-    }
-
     if !grant.is_valid(required_scope, now) {
-        return Err(OnChainError::InsufficientScope);
+        return Err(if grant.expires_at <= now {
+            OnChainError::Expired
+        } else {
+            OnChainError::InsufficientScope
+        });
     }
 
     Ok(())

@@ -1,21 +1,45 @@
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { client } from "@/api/client";
 import type { ApiResponse } from "@/api/types";
 import { useSignedApi } from "@/hooks/use-signed-api";
 
-const queryProctectedKey = ({
+// ── Public (no auth) ──────────────────────────────────────────────────────────
+
+export function usePublicQuery<T>({
+  path,
+  enabled = true,
+}: {
+  path: string;
+  enabled?: boolean;
+}) {
+  return useQuery<ApiResponse<T>>({
+    queryKey: ["public", path],
+    queryFn: async () => {
+      const res = await client.get<ApiResponse<T>>(path);
+      return res.data;
+    },
+    enabled,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+// ── Private (wallet signature + on-chain grant) ───────────────────────────────
+
+const privateQueryKey = ({
   publicKey,
   path,
 }: {
   publicKey?: string;
   path: string;
-}) => ["protected", publicKey, path];
+}) => ["private", publicKey, path];
 
-export function useProtectedQuery<T>({ 
+export function useProtectedQuery<T>({
   path,
   enabled = true,
-}: { 
+}: {
   path: string;
   enabled?: boolean;
 }) {
@@ -23,17 +47,14 @@ export function useProtectedQuery<T>({
   const api = useSignedApi();
 
   return useQuery<ApiResponse<T>>({
-    queryKey: queryProctectedKey({
-      path,
-      publicKey: wallet.publicKey?.toBase58(),
-    }),
+    queryKey: privateQueryKey({ path, publicKey: wallet.publicKey?.toBase58() }),
     queryFn: async () => {
       const res = await api.get<ApiResponse<T>>(path);
       return res.data;
     },
     enabled: !!wallet.connected && !!wallet.publicKey && enabled,
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -49,26 +70,18 @@ export function useProtectedMutation<TInput, TData = unknown>(
 ) {
   const wallet = useWallet();
   const api = useSignedApi();
-
   const queryClient = useQueryClient();
 
   return useMutation<ApiResponse<TData>, Error, TInput>({
     mutationFn: async (input) => {
       const { method, path, body } = buildRequest(input);
-      const res = await api.request<ApiResponse<TData>>({
-        method,
-        url: path,
-        data: body,
-      });
+      const res = await api.request<ApiResponse<TData>>({ method, url: path, data: body });
       return res.data;
     },
     onSuccess: () => {
       options?.invalidates?.forEach((path) => {
         queryClient.invalidateQueries({
-          queryKey: queryProctectedKey({
-            path,
-            publicKey: wallet.publicKey?.toBase58(),
-          }),
+          queryKey: privateQueryKey({ path, publicKey: wallet.publicKey?.toBase58() }),
         });
       });
     },
