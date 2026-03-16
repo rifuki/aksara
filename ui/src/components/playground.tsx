@@ -217,22 +217,6 @@ export function Playground() {
             );
           })}
         </div>
-        
-        <div className="pt-4 border-t border-slate-800">
-          <div className="text-xs text-slate-500 mb-2">Access Levels</div>
-          <div className="space-y-1">
-            {Object.entries(AUTH_CONFIG).map(([key, cfg]) => (
-              <div key={key} className="flex items-center gap-2 text-xs">
-                <span>{cfg.icon}</span>
-                <span className={cfg.color}>{cfg.label}</span>
-                <span className="text-slate-600">-</span>
-                <span className="text-slate-500">
-                  {key === "public" ? "No auth" : key === "signature" ? "Wallet sign" : "On-chain grant"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* Center: Request Builder */}

@@ -1,9 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { GrantPanel } from "@/components/grant-panel";
-import { WalletButton } from "@/components/wallet-button";
-import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/grants")({
   component: GrantsPage,
@@ -11,46 +8,39 @@ export const Route = createFileRoute("/grants")({
 
 function GrantsPage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-slate-200 font-mono">
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="flex items-center gap-2 text-slate-400 hover:text-slate-200 transition-colors">
-              <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm">back to playground</span>
-            </Link>
-          </div>
-          <WalletButton />
-        </div>
+    <div className="max-w-2xl mx-auto">
+      <div className="mb-6">
+        <Link 
+          to="/" 
+          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-300 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Playground</span>
+        </Link>
+      </div>
 
-        {/* Title */}
-        <div className="space-y-1">
-          <h1 className="text-xl font-bold text-white">Access Grant Manager</h1>
-          <p className="text-sm text-slate-500">
-            Issue and revoke on-chain access grants via Solana PDA
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white mb-2">Access Grants</h1>
+          <p className="text-slate-500">
+            Manage on-chain permissions via Solana PDA
           </p>
         </div>
 
-        {/* Grant Panel */}
-        <Card className="bg-[#111] border-slate-800">
-          <CardContent className="p-6">
-            <GrantPanel />
-          </CardContent>
-        </Card>
+        <div className="p-6 bg-[#0f0f0f] rounded-xl border border-slate-800">
+          <GrantPanel />
+        </div>
 
-        {/* Info */}
-        <div className="p-4 bg-slate-900/50 rounded border border-slate-800 text-xs text-slate-500 space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-slate-400">PDA Seed:</span>
-            <code className="text-emerald-400">["access", owner, grantee]</code>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-slate-400">Scopes:</span>
+        <div className="p-4 bg-slate-900/30 rounded-lg border border-slate-800">
+          <div className="text-xs font-mono text-slate-500 mb-2">PDA SEED</div>
+          <code className="text-xs font-mono text-emerald-400">
+            ["access", owner, grantee]
+          </code>
+          
+          <div className="mt-4 text-xs font-mono text-slate-500 mb-2">SCOPES</div>
+          <div className="flex gap-4 text-xs">
             <span className="text-blue-400">READ (0x01)</span>
-            <span className="text-slate-600">|</span>
             <span className="text-purple-400">WRITE (0x02)</span>
-            <span className="text-slate-600">|</span>
             <span className="text-red-400">DELETE (0x04)</span>
           </div>
         </div>
