@@ -16,3 +16,11 @@ export interface ApiError {
 }
 
 export type ApiResponse<T = unknown> = ApiSuccess<T> | ApiError;
+
+export interface Message {
+  id: string;
+  wallet: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}

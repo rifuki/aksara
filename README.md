@@ -62,7 +62,8 @@ Production-ready REST API built with Rust and Axum:
 React dashboard built with Vite:
 - Solana wallet connect (Wallet Standard — auto-detects all wallets)
 - Signed HTTP requests to protected API endpoints
-- TanStack Router + TanStack Query
+- Guided API tester (select endpoint, fill params, send)
+- TanStack Router + TanStack Query + shadcn/ui
 
 Getting started
 ---------------
@@ -105,8 +106,10 @@ Roadmap
 
 - [x] Initialize API server with Axum (`api/`)
 - [x] Wallet-signed HTTP request middleware (Ed25519 verification)
+- [x] Protected CRUD endpoints (`/aksara/messages`)
 - [x] React dashboard with Solana wallet connect (`ui/`)
-- [x] Signed GET request from UI to protected API
+- [x] Signed HTTP requests (GET/POST/PUT/DELETE) from UI to protected API
+- [x] Guided API tester with endpoint config
 - [ ] Initialize smart contract module (`contract/`)
 - [ ] Add TypeScript SDK for signing/verification helpers (`sdk/`)
 - [ ] On-chain grant verification in middleware
