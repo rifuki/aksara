@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 
 import { client as api } from "@/api/client";
+import { useAppWallet } from "@/hooks/use-app-wallet";
 import {
   computeContentDigest,
   buildSignatureBase,
@@ -16,24 +17,31 @@ const TTL_SECONDS = 60;
 
 export function useSignedApi() {
   const wallet = useWallet();
+  const appWallet = useAppWallet();
 
   useEffect(() => {
-    if (!wallet.publicKey || !wallet.signMessage) return;
+    // Prefer app wallet (no popup), fall back to main wallet
+    const appSigner = appWallet.getSigner();
 
-    const publicKey = wallet.publicKey;
-    const signMessage = wallet.signMessage;
+    const publicKeyBase58 = appSigner?.publicKeyBase58 ?? wallet.publicKey?.toBase58();
+    const signFn = appSigner?.sign ?? (
+      wallet.signMessage
+        ? (msg: Uint8Array) => wallet.signMessage!(msg)
+        : null
+    );
+
+    if (!publicKeyBase58 || !signFn) return;
 
     const id = api.interceptors.request.use(async (config) => {
-      const method = config.method?.toUpperCase() ?? "GET";
-      // config.url is the relative path since baseURL is set on axios instance
-      const path = config.url ?? "/";
       const authority = new URL(api.defaults.baseURL!).host;
+      const method = config.method?.toUpperCase() ?? "GET";
+      const path = config.url ?? "/";
 
       const now = Math.floor(Date.now() / 1000);
       const params: SignatureParams = {
         created: now,
         expires: now + TTL_SECONDS,
-        keyid: publicKey.toBase58(),
+        keyid: publicKeyBase58,
         nonce: generateNonce(),
       };
 
@@ -56,7 +64,7 @@ export function useSignedApi() {
 
       // Build RFC 9421 signature base and sign it
       const sigBase = buildSignatureBase(method, authority, path, components, extraValues, params);
-      const signature = await signMessage(new TextEncoder().encode(sigBase));
+      const signature = await signFn(new TextEncoder().encode(sigBase));
 
       // Attach RFC 9421 headers
       config.headers["signature-input"] = serializeSignatureInput(components, params);
@@ -66,7 +74,7 @@ export function useSignedApi() {
     });
 
     return () => api.interceptors.request.eject(id);
-  }, [wallet.publicKey, wallet.signMessage]);
+  }, [wallet.publicKey, wallet.signMessage, appWallet]);
 
   return api;
 }
