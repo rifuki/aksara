@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useProtectedGet } from "@/hooks/use-protected-api";
+import { type ApiResponse } from "@/lib/types";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 
@@ -23,7 +24,7 @@ function AksaraCard() {
   const [path, setPath] = useState("/aksara");
 
   const { data, isLoading, isError, error, refetch } =
-    useProtectedGet<any>(path);
+    useProtectedGet<ApiResponse>(path);
 
   return (
     <Card>

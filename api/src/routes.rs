@@ -9,7 +9,7 @@ pub fn app_routes(state: AppState) -> Router {
     Router::new()
         .nest("/health", health_routes())
         .nest("/aksara", aksara_routes())
-       .fallback(handle_404)
+        .fallback(handle_404)
         .with_state(state)
 }
 

@@ -25,7 +25,9 @@ pub struct ServerConfig {
 
 impl ServerConfig {
     fn from_env() -> Result<Self> {
-        let port = require_env("PORT")?.parse::<u16>().wrap_err("PORT must be a valid u16 integer")?;
+        let port = require_env("PORT")?
+            .parse::<u16>()
+            .wrap_err("PORT must be a valid u16 integer")?;
         let cors_allowed_origins = env::var("CORS_ALLOWED_ORIGINS")
             .unwrap_or_else(|_| "*".to_string())
             .split(',')
