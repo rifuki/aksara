@@ -3,6 +3,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletButton } from "@/components/wallet-button";
 import { ApiTester } from "@/components/api-tester";
 import { AutoSignToggle } from "@/components/auto-sign-toggle";
+import { GrantPanel } from "@/components/grant-panel";
 
 export const Route = createFileRoute("/")({
   component: RouteComponent,
@@ -23,6 +24,7 @@ function RouteComponent() {
         </p>
       )}
       <AutoSignToggle />
+      <GrantPanel />
       <ApiTester />
     </div>
   );
