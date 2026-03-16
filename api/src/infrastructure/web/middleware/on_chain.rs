@@ -106,6 +106,9 @@ pub fn verify_on_chain(
     let (pda, _) =
         Pubkey::find_program_address(&[b"access", owner.as_ref(), grantee.as_ref()], &program_id);
 
+    tracing::info!("Looking for AccessGrant PDA: {}", pda);
+    tracing::info!("Seeds: owner={}, grantee={}", owner, grantee);
+
     let client = RpcClient::new(config.rpc_url.clone());
     let account = client
         .get_account(&pda)

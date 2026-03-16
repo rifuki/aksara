@@ -191,9 +191,9 @@ export function GrantPanel() {
                 href={`https://explorer.solana.com/tx/${status.sig}?cluster=devnet`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-400 hover:text-blue-300 underline"
+                className="text-blue-400 hover:text-blue-300 underline break-all"
               >
-                {status.sig.slice(0, 16)}…
+                {status.sig}
               </a>
             </div>
           )}
