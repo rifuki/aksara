@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAksaraProgram } from "@/hooks/use-aksara-program";
+import { useOwner } from "@/hooks/use-owner";
 
 const SCOPE_OPTIONS = [
   { label: "READ (read-only)",          value: 0x01 },
@@ -22,6 +23,7 @@ const TTL_OPTIONS = [
 export function GrantPanel() {
   const { publicKey } = useWallet();
   const program = useAksaraProgram();
+  const { ownerPubkey, isLoading: ownerLoading } = useOwner();
 
   const [grantee, setGrantee]     = useState("");
   const [scope, setScope]         = useState(0x01);
@@ -30,6 +32,12 @@ export function GrantPanel() {
   const [status, setStatus]       = useState<{ ok: boolean; msg: string } | null>(null);
 
   if (!publicKey || !program) return null;
+
+  const isOwner = ownerPubkey === null   // dev mode — tidak ada owner, semua boleh
+    ? true
+    : publicKey.toBase58() === ownerPubkey;
+
+  const isDisabled = !isOwner || loading !== null;
 
   const handleGrant = async () => {
     if (!grantee.trim()) return;
@@ -79,15 +87,22 @@ export function GrantPanel() {
           verifies the <code>AccessGrant</code> PDA on every request.
         </p>
 
+        {!ownerLoading && !isOwner && (
+          <p className="text-xs font-mono rounded-md bg-amber-50 border border-amber-200 text-amber-700 px-3 py-2">
+            Read-only — only the API owner wallet ({ownerPubkey?.slice(0, 8)}…{ownerPubkey?.slice(-4)}) can grant or revoke access.
+          </p>
+        )}
+
         <Input
           placeholder="Grantee wallet address (base58)"
           value={grantee}
           onChange={(e) => setGrantee(e.target.value)}
           className="font-mono text-xs"
+          disabled={isDisabled}
         />
 
         <div className="flex gap-2">
-          <Select value={String(scope)} onValueChange={(v) => setScope(Number(v))}>
+          <Select value={String(scope)} onValueChange={(v) => setScope(Number(v))} disabled={isDisabled}>
             <SelectTrigger className="h-8 text-xs flex-1">
               <SelectValue />
             </SelectTrigger>
@@ -100,7 +115,7 @@ export function GrantPanel() {
             </SelectContent>
           </Select>
 
-          <Select value={String(ttl)} onValueChange={(v) => setTtl(Number(v))}>
+          <Select value={String(ttl)} onValueChange={(v) => setTtl(Number(v))} disabled={isDisabled}>
             <SelectTrigger className="h-8 text-xs flex-1">
               <SelectValue />
             </SelectTrigger>
@@ -119,7 +134,8 @@ export function GrantPanel() {
             size="sm"
             className="flex-1"
             onClick={handleGrant}
-            disabled={!grantee.trim() || loading !== null}
+            disabled={!grantee.trim() || isDisabled}
+            title={!isOwner ? "Only the API owner can grant access" : undefined}
           >
             {loading === "grant" ? "Sending…" : "Grant Access"}
           </Button>
@@ -128,7 +144,8 @@ export function GrantPanel() {
             variant="destructive"
             className="flex-1"
             onClick={handleRevoke}
-            disabled={!grantee.trim() || loading !== null}
+            disabled={!grantee.trim() || isDisabled}
+            title={!isOwner ? "Only the API owner can revoke access" : undefined}
           >
             {loading === "revoke" ? "Sending…" : "Revoke"}
           </Button>

@@ -5,7 +5,7 @@
 /// without depending on anchor-client or the program crate.
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use anchor_lang::{prelude::borsh, AccountDeserialize, AnchorDeserialize, Discriminator};
+use anchor_lang::{AccountDeserialize, AnchorDeserialize, Discriminator, prelude::borsh};
 use solana_client::rpc_client::RpcClient;
 use solana_sdk::pubkey::Pubkey;
 
@@ -105,7 +105,9 @@ pub fn verify_on_chain(
         Pubkey::find_program_address(&[b"access", owner.as_ref(), grantee.as_ref()], &program_id);
 
     let client = RpcClient::new(config.rpc_url.clone());
-    let account = client.get_account(&pda).map_err(|_| OnChainError::NotFound)?;
+    let account = client
+        .get_account(&pda)
+        .map_err(|_| OnChainError::NotFound)?;
 
     let grant = AccessGrant::try_deserialize(&mut account.data.as_ref())
         .map_err(|e| OnChainError::RpcError(format!("Deserialization failed: {e}")))?;

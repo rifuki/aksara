@@ -18,6 +18,11 @@ use crate::{
 
 // ── Public handlers ───────────────────────────────────────────────────────────
 
+pub async fn get_owner(State(state): State<AppState>) -> ApiResult<serde_json::Value> {
+    let owner = state.config.solana.as_ref().map(|s| s.owner_pubkey.clone());
+    Ok(ApiSuccess::default().with_data(serde_json::json!({ "owner": owner })))
+}
+
 pub async fn list_messages(State(state): State<AppState>) -> ApiResult<Vec<Message>> {
     let messages = state.messages.read().await;
     let mut list = messages.values().cloned().collect::<Vec<Message>>();
@@ -69,7 +74,7 @@ pub async fn create_message(
 
 pub async fn update_message(
     State(state): State<AppState>,
-    Extension(_wallet): Extension<WalletAddress>,
+    Extension(wallet): Extension<WalletAddress>,
     Path(id): Path<String>,
     Json(payload): Json<UpdateMessageRequest>,
 ) -> ApiResult<Message> {
@@ -80,6 +85,12 @@ pub async fn update_message(
             .with_message("Message not found")
     })?;
 
+    if message.wallet != wallet.0 {
+        return Err(ApiError::default()
+            .with_code(StatusCode::FORBIDDEN)
+            .with_message("You can only edit your own messages"));
+    }
+
     message.content = payload.content;
     message.updated_at = chrono::Utc::now().timestamp();
     Ok(ApiSuccess::default().with_data(message.clone()))
@@ -87,15 +98,22 @@ pub async fn update_message(
 
 pub async fn delete_message(
     State(state): State<AppState>,
-    Extension(_wallet): Extension<WalletAddress>,
+    Extension(wallet): Extension<WalletAddress>,
     Path(id): Path<String>,
 ) -> ApiResult<()> {
     let mut messages = state.messages.write().await;
-    if !messages.contains_key(&id) {
-        return Err(ApiError::default()
+    let message = messages.get(&id).ok_or_else(|| {
+        ApiError::default()
             .with_code(StatusCode::NOT_FOUND)
-            .with_message("Message not found"));
+            .with_message("Message not found")
+    })?;
+
+    if message.wallet != wallet.0 {
+        return Err(ApiError::default()
+            .with_code(StatusCode::FORBIDDEN)
+            .with_message("You can only delete your own messages"));
     }
+
     messages.remove(&id);
     Ok(ApiSuccess::default().with_message("Message deleted successfully"))
 }
