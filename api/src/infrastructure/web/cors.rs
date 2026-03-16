@@ -28,9 +28,9 @@ pub fn build_cors_layer(config: &Config) -> CorsLayer {
         .allow_headers([
             header::AUTHORIZATION,
             header::CONTENT_TYPE,
-            HeaderName::from_static("x-csrf-token"),
-            HeaderName::from_static("x-api-key"),
-            HeaderName::from_static("x-request-id"),
+            HeaderName::from_static("x-wallet-address"),
+            HeaderName::from_static("x-timestamp"),
+            HeaderName::from_static("x-signature"),
         ])
         // Expose headers that frontend might need to read
         .expose_headers([header::SET_COOKIE, header::CONTENT_TYPE])

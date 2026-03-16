@@ -1,11 +1,15 @@
 use axum::Router;
 
-use crate::{feature::health::routes, state::AppState};
+use crate::{
+    feature::{aksara::aksara_routes, health::health_routes},
+    state::AppState,
+};
 
 pub fn app_routes(state: AppState) -> Router {
     Router::new()
-        .nest("/health", routes::health_routes())
-        .fallback(handle_404)
+        .nest("/health", health_routes())
+        .nest("/aksara", aksara_routes())
+       .fallback(handle_404)
         .with_state(state)
 }
 

@@ -1,2 +1,4 @@
-pub mod handlers;
-pub mod routes;
+mod handlers;
+mod routes;
+
+pub use routes::health_routes;

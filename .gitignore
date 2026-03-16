@@ -1,0 +1,15 @@
+# env
+.env
+.env.local
+.env.*.local
+
+# rust
+api/target/
+api/logs/
+
+# node
+ui/node_modules/
+ui/dist/
+
+# misc
+.DS_Store
