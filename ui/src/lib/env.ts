@@ -15,3 +15,4 @@ function getRequiredEnv(name: string): string {
 }
 
 export const API_URL = getRequiredEnv("VITE_API_URL");
+export const PROGRAM_ID = getRequiredEnv("VITE_PROGRAM_ID");

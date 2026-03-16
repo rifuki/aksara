@@ -18,7 +18,7 @@ use crate::infrastructure::{
     config::SolanaConfig,
     web::{
         extractor::WalletAddress,
-        middleware::on_chain::{verify_on_chain, SCOPE_READ, SCOPE_WRITE, SCOPE_DELETE},
+        middleware::on_chain::{SCOPE_DELETE, SCOPE_READ, SCOPE_WRITE, verify_on_chain},
         response::ApiError,
     },
 };

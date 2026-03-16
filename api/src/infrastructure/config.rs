@@ -52,13 +52,22 @@ pub struct SolanaConfig {
 }
 
 impl SolanaConfig {
-    fn from_env() -> Option<Self> {
-        let owner = std::env::var("OWNER_PUBKEY").ok()?;
+    fn from_env() -> Result<Option<Self>> {
+        // OWNER_PUBKEY is the feature flag — absent means dev mode (no on-chain checks).
+        let Some(owner_pubkey) = std::env::var("OWNER_PUBKEY").ok() else {
+            return Ok(None);
+        };
+
+        // Once OWNER_PUBKEY is set, the remaining vars are required.
         let rpc_url = std::env::var("SOLANA_RPC_URL")
             .unwrap_or_else(|_| "https://api.devnet.solana.com".to_string());
-        let program_id = std::env::var("PROGRAM_ID")
-            .unwrap_or_else(|_| "H2MUTZ1NSYpGJ1aQgksemfADNfTPurE7doJ77kffCZaE".to_string());
-        Some(Self { owner_pubkey: owner, rpc_url, program_id })
+        let program_id = require_env("PROGRAM_ID")?;
+
+        Ok(Some(Self {
+            owner_pubkey,
+            rpc_url,
+            program_id,
+        }))
     }
 }
 
@@ -80,7 +89,7 @@ impl Config {
             rust_env,
             is_production,
             server: ServerConfig::from_env()?,
-            solana: SolanaConfig::from_env(),
+            solana: SolanaConfig::from_env()?,
         })
     }
 }

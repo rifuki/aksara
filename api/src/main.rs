@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use aksara::{
+use aksara_api::{
     AppState, app_routes,
     infrastructure::{
         Config, env, logging,

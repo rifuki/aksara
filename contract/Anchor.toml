@@ -6,13 +6,16 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-contract = "H2MUTZ1NSYpGJ1aQgksemfADNfTPurE7doJ77kffCZaE"
+aksara = "6GXa5BEKNu7dBtCd3x6UnxkUjbvaoAMQnA9BvQbhavVc"
+
+[programs.devnet]
+aksara = "6GXa5BEKNu7dBtCd3x6UnxkUjbvaoAMQnA9BvQbhavVc"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

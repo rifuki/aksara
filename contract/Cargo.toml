@@ -4,6 +4,17 @@ members = [
 ]
 resolver = "2"
 
+# ── Developer notes (not read by Anchor/Cargo) ───────────────────────────────
+# Program keypair lives OUTSIDE the repo to avoid accidental commits.
+# Before deploying, symlink it into target/deploy/ where Anchor expects it:
+#
+#   ln -sf ~/.config/solana/aksara-keypair.json \
+#          target/deploy/aksara-keypair.json
+#
+[workspace.metadata.aksara]
+program_id = "6GXa5BEKNu7dBtCd3x6UnxkUjbvaoAMQnA9BvQbhavVc"
+keypair    = "~/.config/solana/aksara-keypair.json"
+
 [profile.release]
 overflow-checks = true
 lto = "fat"

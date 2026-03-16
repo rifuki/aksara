@@ -1,34 +1,20 @@
 /// On-chain AccessGrant verification.
 ///
 /// Derives the PDA [b"access", owner, grantee], fetches the account data via
-/// Solana JSON-RPC, deserializes it (Borsh, 8-byte discriminator prefix skipped),
-/// and validates: not revoked, not expired, scope covers required_scope.
+/// Solana JSON-RPC, and deserializes it using the aksara program crate directly
+/// (Anchor's `try_deserialize` handles discriminator validation automatically).
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use borsh::BorshDeserialize;
-use solana_client::rpc_client::RpcClient;
-use solana_sdk::pubkey::Pubkey;
-
-use crate::infrastructure::config::SolanaConfig;
-
-// ── AccessGrant mirror (must match the Anchor account layout) ─────────────────
-
-#[allow(dead_code)]
-#[derive(BorshDeserialize, Debug)]
-struct AccessGrant {
-    pub owner: [u8; 32],
-    pub grantee: [u8; 32],
-    pub scope: u8,
-    pub expires_at: i64,
-    pub revoked: bool,
-    pub bump: u8,
-}
-
-// ── Scope bitmask ──────────────────────────────────────────────────────────────
+use anchor_lang::AccountDeserialize;
+use aksara_program::state::AccessGrant;
 
 pub const SCOPE_READ: u8 = 0x01;
 pub const SCOPE_WRITE: u8 = 0x02;
 pub const SCOPE_DELETE: u8 = 0x04;
+use solana_client::rpc_client::RpcClient;
+use solana_sdk::pubkey::Pubkey;
+
+use crate::infrastructure::config::SolanaConfig;
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
@@ -61,8 +47,6 @@ impl std::fmt::Display for OnChainError {
 
 /// Verify that `grantee_base58` has a valid on-chain grant from the owner
 /// with at least `required_scope`.
-///
-/// Returns `Ok(())` if the grant is valid, `Err(OnChainError)` otherwise.
 pub fn verify_on_chain(
     config: &SolanaConfig,
     grantee_base58: &str,
@@ -82,28 +66,18 @@ pub fn verify_on_chain(
         .parse()
         .map_err(|e| OnChainError::RpcError(format!("Invalid program_id: {e}")))?;
 
-    // Derive AccessGrant PDA — seeds: ["access", owner, grantee]
-    let (pda, _bump) = Pubkey::find_program_address(
-        &[b"access", owner.as_ref(), grantee.as_ref()],
-        &program_id,
-    );
+    let (pda, _bump) =
+        Pubkey::find_program_address(&[b"access", owner.as_ref(), grantee.as_ref()], &program_id);
 
-    // Fetch account data (synchronous RPC call)
     let client = RpcClient::new(config.rpc_url.clone());
     let account = client
         .get_account(&pda)
         .map_err(|_| OnChainError::NotFound)?;
 
-    // Skip 8-byte Anchor discriminator, then deserialize
-    let data = account
-        .data
-        .get(8..)
-        .ok_or_else(|| OnChainError::RpcError("Account data too short".to_string()))?;
-
-    let grant = AccessGrant::try_from_slice(data)
+    // try_deserialize validates the 8-byte Anchor discriminator automatically.
+    let grant = AccessGrant::try_deserialize(&mut account.data.as_ref())
         .map_err(|e| OnChainError::RpcError(format!("Deserialization failed: {e}")))?;
 
-    // Validate
     if grant.revoked {
         return Err(OnChainError::Revoked);
     }
@@ -117,7 +91,7 @@ pub fn verify_on_chain(
         return Err(OnChainError::Expired);
     }
 
-    if (grant.scope & required_scope) == 0 {
+    if !grant.is_valid(required_scope, now) {
         return Err(OnChainError::InsufficientScope);
     }
 

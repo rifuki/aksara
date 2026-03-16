@@ -1,9 +1,7 @@
 use axum::{Extension, Router, middleware, routing::get};
 
 use crate::{
-    AppState,
-    feature::aksara::handlers,
-    infrastructure::web::middleware::wallet_auth_middleware,
+    AppState, feature::aksara::handlers, infrastructure::web::middleware::wallet_auth_middleware,
 };
 
 pub fn aksara_routes(state: &AppState) -> Router<AppState> {

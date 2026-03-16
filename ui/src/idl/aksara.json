@@ -1,0 +1,271 @@
+{
+  "address": "6GXa5BEKNu7dBtCd3x6UnxkUjbvaoAMQnA9BvQbhavVc",
+  "metadata": {
+    "name": "aksara",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "grant_access",
+      "docs": [
+        "Owner grants API access to a grantee wallet with a scope bitmask and expiry.",
+        "Creates (or resets) an `AccessGrant` PDA keyed by [owner, grantee]."
+      ],
+      "discriminator": [
+        66,
+        88,
+        87,
+        113,
+        39,
+        22,
+        27,
+        165
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "grantee"
+        },
+        {
+          "name": "access_grant",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  99,
+                  99,
+                  101,
+                  115,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "account",
+                "path": "grantee"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "scope",
+          "type": "u8"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "revoke_access",
+      "docs": [
+        "Owner revokes a previously issued grant (sets `revoked = true`)."
+      ],
+      "discriminator": [
+        106,
+        128,
+        38,
+        169,
+        103,
+        238,
+        102,
+        147
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true
+        },
+        {
+          "name": "grantee"
+        },
+        {
+          "name": "access_grant",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  99,
+                  99,
+                  101,
+                  115,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "account",
+                "path": "grantee"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "AccessGrant",
+      "discriminator": [
+        167,
+        55,
+        184,
+        237,
+        74,
+        242,
+        0,
+        109
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "GrantCreated",
+      "discriminator": [
+        162,
+        254,
+        131,
+        56,
+        65,
+        214,
+        85,
+        6
+      ]
+    },
+    {
+      "name": "GrantRevoked",
+      "discriminator": [
+        192,
+        60,
+        253,
+        12,
+        110,
+        158,
+        200,
+        30
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidScope",
+      "msg": "Scope must be non-zero"
+    },
+    {
+      "code": 6001,
+      "name": "AlreadyExpired",
+      "msg": "expires_at must be in the future"
+    },
+    {
+      "code": 6002,
+      "name": "AlreadyRevoked",
+      "msg": "Grant is already revoked"
+    },
+    {
+      "code": 6003,
+      "name": "Unauthorized",
+      "msg": "Only the owner can revoke a grant"
+    }
+  ],
+  "types": [
+    {
+      "name": "AccessGrant",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "grantee",
+            "type": "pubkey"
+          },
+          {
+            "name": "scope",
+            "type": "u8"
+          },
+          {
+            "name": "expires_at",
+            "type": "i64"
+          },
+          {
+            "name": "revoked",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GrantCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "grantee",
+            "type": "pubkey"
+          },
+          {
+            "name": "scope",
+            "type": "u8"
+          },
+          {
+            "name": "expires_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GrantRevoked",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "grantee",
+            "type": "pubkey"
+          }
+        ]
+      }
+    }
+  ]
+}
