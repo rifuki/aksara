@@ -45,7 +45,7 @@ export function Playground() {
   const [selectedEndpoint, setSelectedEndpoint] = useState<Endpoint>(ALL_ENDPOINTS[2]); // Default to POST
   const [pathParams, setPathParams] = useState<Record<string, string>>({});
   const [bodyContent, setBodyContent] = useState('{"content": "Hello Aksara"}');
-  const [response, setResponse] = useState<any>(null);
+  const [response, setResponse] = useState<unknown>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<RequestHistoryItem[]>([]);
@@ -152,7 +152,7 @@ export function Playground() {
       const serializedBody = hasBody ? JSON.stringify(JSON.parse(bodyContent)) : undefined;
       
       const res = await client.request({
-        method: selectedEndpoint.method as any,
+        method: selectedEndpoint.method as "GET" | "POST" | "PUT" | "DELETE",
         url: resolvedPath,
         data: serializedBody,
         headers: {
@@ -174,8 +174,9 @@ export function Playground() {
         duration: Date.now() - startTime,
       };
       setHistory(prev => [newItem, ...prev].slice(0, 10));
-    } catch (e: any) {
-      setError(e.response?.data?.message || e.message);
+    } catch (e) {
+      const err = e as { response?: { data?: { message?: string } }; message?: string };
+      setError(err.response?.data?.message || err.message || "Unknown error");
       const errorItem: RequestHistoryItem = {
         id: Math.random().toString(36).slice(2),
         timestamp: Date.now(),

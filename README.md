@@ -187,8 +187,3 @@ Roadmap
 - [x] Deployed to Solana devnet
 - [ ] TypeScript SDK for signing / verification helpers
 - [ ] Integration tests
-
-License
--------
-
-MIT
