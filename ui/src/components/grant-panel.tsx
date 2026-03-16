@@ -119,7 +119,7 @@ export function GrantPanel() {
               key={opt.value}
               onClick={() => !isDisabled && setScope(opt.value)}
               disabled={isDisabled}
-              className={`p-3 rounded border text-left transition-colors ${
+              className={`p-3 rounded border text-left transition-colors cursor-pointer disabled:cursor-not-allowed ${
                 scope === opt.value
                   ? "bg-emerald-500/10 border-emerald-500/50 text-emerald-400"
                   : "bg-[#111] border-slate-700 text-slate-400 hover:border-slate-600"
@@ -141,7 +141,7 @@ export function GrantPanel() {
               key={opt.seconds}
               onClick={() => !isDisabled && setTtl(opt.seconds)}
               disabled={isDisabled}
-              className={`flex-1 p-2 rounded border text-sm font-mono transition-colors ${
+              className={`flex-1 p-2 rounded border text-sm font-mono transition-colors cursor-pointer disabled:cursor-not-allowed ${
                 ttl === opt.seconds
                   ? "bg-slate-700 border-slate-500 text-white"
                   : "bg-[#111] border-slate-700 text-slate-400 hover:border-slate-600"
@@ -159,7 +159,7 @@ export function GrantPanel() {
         <button
           onClick={handleGrant}
           disabled={!grantee.trim() || isDisabled}
-          className="p-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded text-sm font-medium transition-colors"
+          className="p-3 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded text-sm font-medium transition-colors cursor-pointer disabled:cursor-not-allowed"
         >
           {loading === "grant" ? "Confirming..." : "Grant Access"}
         </button>
@@ -167,7 +167,7 @@ export function GrantPanel() {
         <button
           onClick={handleRevoke}
           disabled={!grantee.trim() || isDisabled}
-          className="p-3 bg-red-600/80 hover:bg-red-500 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded text-sm font-medium transition-colors"
+          className="p-3 bg-red-600/80 hover:bg-red-500 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded text-sm font-medium transition-colors cursor-pointer disabled:cursor-not-allowed"
         >
           {loading === "revoke" ? "Confirming..." : "Revoke"}
         </button>

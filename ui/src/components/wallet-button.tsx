@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { SolanaIcon } from "./icons/solana";
-import { Button } from "./ui/button";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,8 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { Copy, LogOut } from "lucide-react";
 
 async function copyToClipboard({
   text,
@@ -22,7 +22,7 @@ async function copyToClipboard({
   try {
     await navigator.clipboard.writeText(text);
     setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000); // Reset after 2 seconds
+    setTimeout(() => setIsCopied(false), 2000);
   } catch (err) {
     console.error("Failed to copy to clipboard:", err);
   }
@@ -39,10 +39,13 @@ export function WalletButton() {
 
   if (!connected || !publicKey) {
     return (
-      <Button onClick={() => setVisible(true)}>
+      <button
+        onClick={() => setVisible(true)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-white text-black text-sm font-medium transition-colors cursor-pointer"
+      >
         <SolanaIcon />
         Connect Wallet
-      </Button>
+      </button>
     );
   }
 
@@ -52,17 +55,30 @@ export function WalletButton() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button>{short_address}</Button>
+        <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors cursor-pointer">
+          <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+          <code className="text-xs text-slate-300 font-mono">{short_address}</code>
+        </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel
-          className="flex items-center justify-between cursor-pointer"
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="font-mono text-xs text-slate-500">
+          Connected Wallet
+        </DropdownMenuLabel>
+        <DropdownMenuItem
+          className="cursor-pointer"
           onClick={() => copyToClipboard({ text: address, setIsCopied })}
         >
+          <Copy className="w-4 h-4 mr-2" />
           {isCopied ? "Copied!" : "Copy Address"}
-        </DropdownMenuLabel>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={disconnect}>Disconnect</DropdownMenuItem>
+        <DropdownMenuItem
+          className="cursor-pointer text-red-400 focus:text-red-400"
+          onSelect={disconnect}
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Disconnect
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

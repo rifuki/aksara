@@ -11,6 +11,7 @@ import {
 } from "@/lib/sign-request";
 import { ALL_ENDPOINTS, METHOD_COLORS, AUTH_CONFIG, buildPath, type Endpoint, type AuthLevel } from "@/api/endpoints";
 import { useAppWallet } from "@/hooks/use-app-wallet";
+import { AutoSignToggle } from "@/components/auto-sign-toggle";
 import { client } from "@/api/client";
 import { Send, History, Lock, Globe, PenLine, Shield, CheckCircle, XCircle } from "lucide-react";
 
@@ -214,7 +215,7 @@ export function Playground() {
                   setError(null);
                   setResponse(null);
                 }}
-                className={`w-full text-left p-3 rounded-lg border transition-all ${
+                className={`w-full text-left p-3 rounded-lg border transition-all cursor-pointer ${
                   isSelected 
                     ? "bg-slate-800 border-slate-600" 
                     : "bg-transparent border-slate-800 hover:border-slate-700"
@@ -322,12 +323,17 @@ export function Playground() {
               <button
                 onClick={handleSend}
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-slate-100 hover:bg-white text-black font-medium text-sm transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-slate-100 hover:bg-white text-black font-medium text-sm transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
               >
                 <Send className="w-4 h-4" />
                 {loading ? "Signing..." : "Send Request"}
               </button>
             )}
+          </div>
+
+          {/* Auto-Sign Toggle */}
+          <div className="px-4 pb-4">
+            <AutoSignToggle />
           </div>
         </div>
 
@@ -343,7 +349,7 @@ export function Playground() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => setActiveTab("preview")}
-            className={`text-xs font-mono uppercase tracking-wider transition-colors ${
+            className={`text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer ${
               activeTab === "preview" ? "text-white" : "text-slate-500 hover:text-slate-300"
             }`}
           >
@@ -351,7 +357,7 @@ export function Playground() {
           </button>
           <button
             onClick={() => setActiveTab("history")}
-            className={`text-xs font-mono uppercase tracking-wider transition-colors flex items-center gap-1 ${
+            className={`text-xs font-mono uppercase tracking-wider transition-colors flex items-center gap-1 cursor-pointer ${
               activeTab === "history" ? "text-white" : "text-slate-500 hover:text-slate-300"
             }`}
           >

@@ -1,5 +1,4 @@
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
-import { useWallet } from "@solana/wallet-adapter-react";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { SolanaProvider } from "@/providers/solana";
 import { WalletButton } from "@/components/wallet-button";
@@ -31,8 +30,6 @@ function RootLayout() {
 }
 
 function RootContent() {
-  const { connected, publicKey } = useWallet();
-
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-slate-200 flex flex-col">
       {/* Sticky Header */}
@@ -51,14 +48,6 @@ function RootContent() {
           </div>
 
           <div className="flex items-center gap-3">
-            {connected && publicKey && (
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900 border border-slate-800">
-                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                <code className="text-xs text-slate-400">
-                  {publicKey.toBase58().slice(0, 4)}...{publicKey.toBase58().slice(-4)}
-                </code>
-              </div>
-            )}
             <WalletButton />
           </div>
         </div>
@@ -98,7 +87,7 @@ function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
   return (
     <Link
       to={to}
-      className="px-3 py-1.5 text-sm text-slate-400 hover:text-white rounded-md hover:bg-slate-800/50 transition-colors"
+      className="px-3 py-1.5 text-sm text-slate-400 hover:text-white rounded-md hover:bg-slate-800/50 transition-colors cursor-pointer"
       activeProps={{ className: "text-white bg-slate-800" }}
     >
       {children}
