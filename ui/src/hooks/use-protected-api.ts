@@ -12,7 +12,13 @@ const queryProctectedKey = ({
   path: string;
 }) => ["protected", publicKey, path];
 
-export function useProtectedQuery<T>({ path }: { path: string }) {
+export function useProtectedQuery<T>({ 
+  path,
+  enabled = true,
+}: { 
+  path: string;
+  enabled?: boolean;
+}) {
   const wallet = useWallet();
   const api = useSignedApi();
 
@@ -25,7 +31,7 @@ export function useProtectedQuery<T>({ path }: { path: string }) {
       const res = await api.get<ApiResponse<T>>(path);
       return res.data;
     },
-    enabled: !!wallet.connected && !!wallet.publicKey,
+    enabled: !!wallet.connected && !!wallet.publicKey && enabled,
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });

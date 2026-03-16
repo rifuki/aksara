@@ -26,11 +26,13 @@ pub fn build_cors_layer(config: &Config) -> CorsLayer {
             Method::OPTIONS,
         ])
         .allow_headers([
-            header::AUTHORIZATION,
+            // Standard
             header::CONTENT_TYPE,
-            HeaderName::from_static("x-wallet-address"),
-            HeaderName::from_static("x-timestamp"),
-            HeaderName::from_static("x-signature"),
+            header::AUTHORIZATION,
+            // RFC 9421 HTTP Message Signatures (pipeline order)
+            HeaderName::from_static("content-digest"), // 1. hash body
+            HeaderName::from_static("signature-input"), // 2. describe what was signed
+            HeaderName::from_static("signature"),      // 3. the signature itself
         ])
         // Expose headers that frontend might need to read
         .expose_headers([header::SET_COOKIE, header::CONTENT_TYPE])

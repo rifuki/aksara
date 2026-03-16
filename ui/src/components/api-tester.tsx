@@ -94,17 +94,17 @@ export function ApiTester() {
 }
 
 function GetAction({ path }: { path: string }) {
-  const { data, isLoading, isError, error, refetch } =
-    useProtectedQuery<unknown>({ path });
+  const { data, isFetching, isError, error, refetch } =
+    useProtectedQuery<unknown>({ path, enabled: false });
 
   return (
     <div className="space-y-3">
-      <Button onClick={() => refetch()} disabled={isLoading} className="w-full">
-        {isLoading ? "Fetching..." : "Send"}
+      <Button onClick={() => refetch()} disabled={isFetching} className="w-full">
+        {isFetching ? "Fetching..." : "Send"}
       </Button>
       <ResponseBox
         data={data}
-        isLoading={isLoading}
+        isLoading={isFetching}
         isError={isError}
         error={error}
       />
