@@ -4,4 +4,4 @@ pub mod logging;
 pub mod server;
 pub mod web;
 
-pub use config::Config;
+pub use config::{Config, SolanaConfig};

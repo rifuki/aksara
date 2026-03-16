@@ -8,7 +8,7 @@ use crate::{
 pub fn app_routes(state: AppState) -> Router {
     Router::new()
         .nest("/health", health_routes())
-        .nest("/aksara", aksara_routes())
+        .nest("/aksara", aksara_routes(&state))
         .fallback(handle_404)
         .with_state(state)
 }

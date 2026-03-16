@@ -42,10 +42,33 @@ impl ServerConfig {
 }
 
 #[derive(Debug, Clone)]
+pub struct SolanaConfig {
+    /// Base58 pubkey of the API owner who issues grants
+    pub owner_pubkey: String,
+    /// Solana JSON-RPC URL (e.g. devnet or localnet)
+    pub rpc_url: String,
+    /// Aksara program ID
+    pub program_id: String,
+}
+
+impl SolanaConfig {
+    fn from_env() -> Option<Self> {
+        let owner = std::env::var("OWNER_PUBKEY").ok()?;
+        let rpc_url = std::env::var("SOLANA_RPC_URL")
+            .unwrap_or_else(|_| "https://api.devnet.solana.com".to_string());
+        let program_id = std::env::var("PROGRAM_ID")
+            .unwrap_or_else(|_| "H2MUTZ1NSYpGJ1aQgksemfADNfTPurE7doJ77kffCZaE".to_string());
+        Some(Self { owner_pubkey: owner, rpc_url, program_id })
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Config {
     pub rust_env: String,
     pub is_production: bool,
     pub server: ServerConfig,
+    /// Optional — on-chain verification skipped if None (dev mode)
+    pub solana: Option<SolanaConfig>,
 }
 
 impl Config {
@@ -57,6 +80,7 @@ impl Config {
             rust_env,
             is_production,
             server: ServerConfig::from_env()?,
+            solana: SolanaConfig::from_env(),
         })
     }
 }

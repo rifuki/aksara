@@ -14,7 +14,14 @@ use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use dashmap::DashMap;
 use sha2::{Digest, Sha256};
 
-use crate::infrastructure::web::{extractor::WalletAddress, response::ApiError};
+use crate::infrastructure::{
+    config::SolanaConfig,
+    web::{
+        extractor::WalletAddress,
+        middleware::on_chain::{verify_on_chain, SCOPE_READ, SCOPE_WRITE, SCOPE_DELETE},
+        response::ApiError,
+    },
+};
 
 /// Clock skew tolerance in seconds
 const CLOCK_SKEW_SEC: u64 = 5;
@@ -132,11 +139,31 @@ pub async fn wallet_auth_middleware(req: Request, next: Next) -> Result<Response
             .with_message("Invalid signature")
     })?;
 
-    // 8. Inject wallet address into extensions
+    // 8. Optional on-chain AccessGrant verification
+    //    Skipped when OWNER_PUBKEY is not configured (development mode).
+    if let Some(solana_cfg) = parts.extensions.get::<SolanaConfig>() {
+        let required_scope = required_scope_for(&method);
+        if let Err(e) = verify_on_chain(solana_cfg, &keyid, required_scope) {
+            return Err(ApiError::default()
+                .with_code(StatusCode::FORBIDDEN)
+                .with_message(e.to_string()));
+        }
+    }
+
+    // 9. Inject wallet address into extensions
     let mut req = Request::from_parts(parts, Body::from(body_bytes));
     req.extensions_mut().insert(WalletAddress(keyid));
 
     Ok(next.run(req).await)
+}
+
+/// Map HTTP method to required scope bitmask.
+fn required_scope_for(method: &str) -> u8 {
+    match method {
+        "POST" | "PUT" | "PATCH" => SCOPE_WRITE,
+        "DELETE" => SCOPE_DELETE,
+        _ => SCOPE_READ,
+    }
 }
 
 // ── RFC 9421 Parsing ─────────────────────────────────────────────────────────
