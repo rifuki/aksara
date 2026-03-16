@@ -90,8 +90,8 @@ export const METHOD_COLORS: Record<Endpoint["method"], string> = {
   DELETE: "text-red-500",
 };
 
-export const AUTH_CONFIG: Record<AuthLevel, { label: string; color: string; icon: string }> = {
-  public: { label: "Open", color: "text-slate-400", icon: "🌐" },
-  signature: { label: "Sign", color: "text-blue-400", icon: "✍️" },
-  grant: { label: "Grant", color: "text-purple-400", icon: "🔐" },
+export const AUTH_CONFIG: Record<AuthLevel, { label: string; color: string }> = {
+  public: { label: "Open", color: "text-slate-400" },
+  signature: { label: "Sign", color: "text-blue-400" },
+  grant: { label: "Grant", color: "text-purple-400" },
 };

@@ -9,10 +9,24 @@ import {
   serializeSignature,
   type SignatureParams 
 } from "@/lib/sign-request";
-import { ALL_ENDPOINTS, METHOD_COLORS, AUTH_CONFIG, buildPath, type Endpoint } from "@/api/endpoints";
+import { ALL_ENDPOINTS, METHOD_COLORS, AUTH_CONFIG, buildPath, type Endpoint, type AuthLevel } from "@/api/endpoints";
 import { useAppWallet } from "@/hooks/use-app-wallet";
 import { client } from "@/api/client";
-import { Send, History, Lock } from "lucide-react";
+import { Send, History, Lock, Globe, PenLine, Shield, CheckCircle, XCircle } from "lucide-react";
+
+function AuthIcon({ auth, className }: { auth: AuthLevel; className?: string }) {
+  const props = { className: `w-3 h-3 ${className || ""}` };
+  switch (auth) {
+    case "public":
+      return <Globe {...props} />;
+    case "signature":
+      return <PenLine {...props} />;
+    case "grant":
+      return <Shield {...props} />;
+    default:
+      return null;
+  }
+}
 
 type RequestHistoryItem = {
   id: string;
@@ -51,9 +65,10 @@ export function Playground() {
   useEffect(() => {
     const compute = async () => {
       const hasBody = selectedEndpoint.method !== "GET" && selectedEndpoint.body;
-      const body = hasBody ? bodyContent : "";
+      // Normalize JSON untuk konsistensi dengan yang dikirim
+      const body = hasBody ? JSON.stringify(JSON.parse(bodyContent)) : "";
       
-      const digest = await computeContentDigest(body || "");
+      const digest = await computeContentDigest(body);
       const now = Math.floor(Date.now() / 1000);
       const params: SignatureParams = {
         created: now,
@@ -132,14 +147,18 @@ export function Playground() {
       const sigBytes = await signer(new TextEncoder().encode(base));
       const sigStr = serializeSignature(sigBytes);
       
+      // Re-serialize body dengan format yang sama untuk konsistensi digest
+      const serializedBody = hasBody ? JSON.stringify(JSON.parse(bodyContent)) : undefined;
+      
       const res = await client.request({
         method: selectedEndpoint.method as any,
         url: resolvedPath,
-        data: hasBody ? JSON.parse(bodyContent) : undefined,
+        data: serializedBody,
         headers: {
           ...(hasBody && { "content-digest": sigData?.digest }),
           "signature-input": serializeSignatureInput(components, params),
           "signature": sigStr,
+          ...(hasBody && { "Content-Type": "application/json" }),
         },
       });
       
@@ -205,8 +224,8 @@ export function Playground() {
                   <span className={`text-xs font-bold ${METHOD_COLORS[ep.method]}`}>
                     {ep.method}
                   </span>
-                  <span className={`text-xs ${auth.color}`}>
-                    {auth.icon}
+                  <span className={`text-xs ${auth.color} flex items-center`}>
+                    <AuthIcon auth={ep.auth} className={auth.color} />
                   </span>
                 </div>
                 <div className="text-sm text-slate-300 mt-1">{ep.label}</div>
@@ -227,8 +246,9 @@ export function Playground() {
           </div>
           
           <div className="flex items-center gap-2">
-            <span className={`text-xs ${AUTH_CONFIG[selectedEndpoint.auth].color}`}>
-              {AUTH_CONFIG[selectedEndpoint.auth].icon} {AUTH_CONFIG[selectedEndpoint.auth].label}
+            <span className={`text-xs ${AUTH_CONFIG[selectedEndpoint.auth].color} flex items-center gap-1`}>
+              <AuthIcon auth={selectedEndpoint.auth} className={AUTH_CONFIG[selectedEndpoint.auth].color} />
+              {AUTH_CONFIG[selectedEndpoint.auth].label}
             </span>
           </div>
         </div>
@@ -350,9 +370,9 @@ export function Playground() {
                   <span className="text-slate-700">•</span>
                   <span className="font-mono text-[10px]">RFC 9530</span>
                 </div>
-                <div className="p-3 bg-[#0f0f0f] rounded-lg border border-slate-800">
-                  <code className="text-xs font-mono text-emerald-400 break-all">
-                    {sigData.digest.slice(0, 60)}...
+                <div className="p-3 bg-[#0f0f0f] rounded-lg border border-slate-800 overflow-x-auto">
+                  <code className="text-xs font-mono text-emerald-400 whitespace-nowrap">
+                    {sigData.digest}
                   </code>
                 </div>
               </div>
@@ -366,9 +386,8 @@ export function Playground() {
                   <span className="text-slate-700">•</span>
                   <span className="font-mono text-[10px]">RFC 9421</span>
                 </div>
-                <pre className="p-3 bg-[#0f0f0f] rounded-lg border border-slate-800 text-xs font-mono text-slate-400 overflow-x-auto whitespace-pre-wrap max-h-48">
-                  {sigData.base.slice(0, 400)}
-                  {sigData.base.length > 400 && "..."}
+                <pre className="p-3 bg-[#0f0f0f] rounded-lg border border-slate-800 text-xs font-mono text-slate-400 overflow-x-auto whitespace-pre max-h-48">
+                  {sigData.base}
                 </pre>
               </div>
             )}
@@ -407,8 +426,8 @@ export function Playground() {
                   <span className="flex-1 text-xs text-slate-400 truncate font-mono">
                     {item.path}
                   </span>
-                  <span className={`text-xs ${item.status === "success" ? "text-emerald-500" : "text-red-500"}`}>
-                    {item.status === "success" ? "✓" : "✗"}
+                  <span className={`text-xs ${item.status === "success" ? "text-emerald-500" : "text-red-500"} flex items-center`}>
+                    {item.status === "success" ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
                   </span>
                   <span className="text-xs text-slate-600">
                     {item.duration}ms
