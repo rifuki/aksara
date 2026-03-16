@@ -1,8 +1,17 @@
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { WalletButton } from "@/components/wallet-button";
 import { AppWalletProvider } from "@/hooks/use-app-wallet";
 import { Shield } from "lucide-react";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -12,7 +21,8 @@ function RootLayout() {
   const { connected, publicKey } = useWallet();
 
   return (
-    <AppWalletProvider>
+    <QueryClientProvider client={queryClient}>
+      <AppWalletProvider>
       <div className="min-h-screen bg-[#0a0a0a] text-slate-200 flex flex-col">
         {/* Sticky Header */}
         <header className="sticky top-0 z-50 border-b border-slate-800 bg-[#0a0a0a]/95 backdrop-blur">
@@ -70,7 +80,8 @@ function RootLayout() {
           </div>
         </footer>
       </div>
-    </AppWalletProvider>
+      </AppWalletProvider>
+    </QueryClientProvider>
   );
 }
 
